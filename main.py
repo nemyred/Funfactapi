@@ -52,19 +52,13 @@ def classify_number(number: str = Query(..., description="The number to classify
     # Convert to integer if valid
     number = int(number)
 
-    # Handle negative numbers (optional)
-    if number < 0:
-        return JSONResponse(
-            content={
-                "number": number,
-                "error": True,
-                "message": "Invalid input: number must be positive."
-            },
-            status_code=400
-        )
-
-    # Determine properties
+    # Handle negative numbers but still return a valid response (status 200)
     properties = []
+    if number < 0:
+        # For negative numbers, we still classify them as valid
+        properties.append("negative")
+
+    # Determine properties for valid numbers
     if is_armstrong(number):
         properties.append("armstrong")
     properties.append("even" if number % 2 == 0 else "odd")
@@ -80,7 +74,7 @@ def classify_number(number: str = Query(..., description="The number to classify
     except requests.exceptions.RequestException:
         fun_fact = "Fun fact service unavailable."
 
-    # Return valid JSON response
+    # Return valid JSON response with status 200
     return JSONResponse(
         content={
             "number": number,
