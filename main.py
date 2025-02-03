@@ -31,6 +31,7 @@ def is_perfect(n: int) -> bool:
 
 
 def is_armstrong(n: int) -> bool:
+    n = abs(n)  # Work with the absolute value to avoid issues with negative numbers
     digits = [int(d) for d in str(n)]
     power = len(digits)
     return sum(d ** power for d in digits) == n
