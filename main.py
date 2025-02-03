@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import requests
+import json
 
 app = FastAPI()
 
@@ -13,6 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def is_prime(n: int) -> bool:
     if n < 2:
         return False
@@ -21,21 +23,29 @@ def is_prime(n: int) -> bool:
             return False
     return True
 
+
 def is_perfect(n: int) -> bool:
     if n < 2:
         return False
-    return sum([i for i in range(1, n) if n % i == 0]) == n
+    return sum(i for i in range(1, n) if n % i == 0) == n
+
 
 def is_armstrong(n: int) -> bool:
     digits = [int(d) for d in str(n)]
     power = len(digits)
     return sum(d ** power for d in digits) == n
 
+
 @app.get("/api/classify-number")
-def classify_number(number: int = Query(..., description="The number to classify")):
-    # Validate number (Must be an integer)
-    if not isinstance(number, int):
-        raise HTTPException(status_code=400, detail="Invalid input. Number must be an integer.")
+def classify_number(number: str = Query(..., description="The number to classify")):
+    # Validate input: Must be an integer
+    if not number.lstrip("-").isdigit():
+        return JSONResponse(
+            content={"number": number, "error": True, "message": "Invalid input. Number must be an integer."},
+            status_code=400
+        )
+
+    number = int(number)  # Convert validated input to integer
 
     # Determine properties
     properties = []
@@ -57,9 +67,9 @@ def classify_number(number: int = Query(..., description="The number to classify
     # Return JSON response with proper types
     return {
         "number": number,
-        "is_prime": bool(is_prime(number)),   # Ensure boolean
-        "is_perfect": bool(is_perfect(number)),  # Ensure boolean
-        "properties": properties,  # Ensure list/array
-        "digit_sum": sum(map(int, str(abs(number)))),  # Ensure numeric
-        "fun_fact": str(fun_fact)  # Ensure string
+        "is_prime": bool(is_prime(number)),
+        "is_perfect": bool(is_perfect(number)),
+        "properties": properties,
+        "digit_sum": sum(map(int, str(abs(number)))),
+        "fun_fact": str(fun_fact)
     }
