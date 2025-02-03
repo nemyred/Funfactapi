@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse  # Import JSONResponse
 import requests
-import json
 
 app = FastAPI()
 
@@ -41,7 +41,10 @@ def classify_number(number: str = Query(..., description="The number to classify
     # Validate input: Must be an integer
     if not number.lstrip("-").isdigit():
         return JSONResponse(
-            content={"number": number, "error": True, "message": "Invalid input. Number must be an integer."},
+            content={
+                "number": number,
+                "error": True
+            },
             status_code=400
         )
 
@@ -65,11 +68,14 @@ def classify_number(number: str = Query(..., description="The number to classify
         fun_fact = "Fun fact service unavailable."
 
     # Return JSON response with proper types
-    return {
-        "number": number,
-        "is_prime": bool(is_prime(number)),
-        "is_perfect": bool(is_perfect(number)),
-        "properties": properties,
-        "digit_sum": sum(map(int, str(abs(number)))),
-        "fun_fact": str(fun_fact)
-    }
+    return JSONResponse(
+        content={
+            "number": number,
+            "is_prime": bool(is_prime(number)),
+            "is_perfect": bool(is_perfect(number)),
+            "properties": properties,
+            "digit_sum": sum(map(int, str(abs(number)))),
+            "fun_fact": str(fun_fact)
+        },
+        status_code=200
+    )
