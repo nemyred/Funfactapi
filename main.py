@@ -1,13 +1,13 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 
 app = FastAPI()
 
-# Enable CORS (Allow all origins for now, can be restricted later)
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change this to specific domains if needed
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,8 +32,14 @@ def is_armstrong(n: int) -> bool:
     return sum(d ** power for d in digits) == n
 
 @app.get("/api/classify-number")
-def classify_number(number: int = Query(..., description="The number to classify")):
+def classify_number(number: str = Query(..., description="The number to classify")):
     try:
+        # Ensure input is an integer
+        if not number.lstrip("-").isdigit():
+            return {"number": number, "error": True}
+
+        number = int(number)
+
         # Determine properties
         properties = []
         if is_armstrong(number):
@@ -55,4 +61,3 @@ def classify_number(number: int = Query(..., description="The number to classify
         }
     except Exception as e:
         return {"number": number, "error": True, "message": str(e)}
-
