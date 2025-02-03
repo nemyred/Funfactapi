@@ -32,32 +32,34 @@ def is_armstrong(n: int) -> bool:
     return sum(d ** power for d in digits) == n
 
 @app.get("/api/classify-number")
-def classify_number(number: str = Query(..., description="The number to classify")):
+def classify_number(number: int = Query(..., description="The number to classify")):
+    # Validate number (Must be an integer)
+    if not isinstance(number, int):
+        raise HTTPException(status_code=400, detail="Invalid input. Number must be an integer.")
+
+    # Determine properties
+    properties = []
+    if is_armstrong(number):
+        properties.append("armstrong")
+    properties.append("even" if number % 2 == 0 else "odd")
+
+    # Get fun fact
+    fun_fact_url = f"http://numbersapi.com/{number}/math"
     try:
-        # Ensure input is an integer
-        if not number.lstrip("-").isdigit():
-            return {"number": number, "error": True}
+        fun_fact_response = requests.get(fun_fact_url)
+        if fun_fact_response.status_code == 200:
+            fun_fact = fun_fact_response.text
+        else:
+            fun_fact = "No fun fact available."
+    except requests.exceptions.RequestException:
+        fun_fact = "Fun fact service unavailable."
 
-        number = int(number)
-
-        # Determine properties
-        properties = []
-        if is_armstrong(number):
-            properties.append("armstrong")
-        properties.append("even" if number % 2 == 0 else "odd")
-
-        # Get fun fact
-        fun_fact_url = f"http://numbersapi.com/{number}/math"
-        fun_fact = requests.get(fun_fact_url).text
-
-        # JSON response
-        return {
-            "number": number,
-            "is_prime": is_prime(number),
-            "is_perfect": is_perfect(number),
-            "properties": properties,
-            "digit_sum": sum(map(int, str(number))),
-            "fun_fact": fun_fact
-        }
-    except Exception as e:
-        return {"number": number, "error": True, "message": str(e)}
+    # Return JSON response with proper types
+    return {
+        "number": number,
+        "is_prime": bool(is_prime(number)),   # Ensure boolean
+        "is_perfect": bool(is_perfect(number)),  # Ensure boolean
+        "properties": properties,  # Ensure list/array
+        "digit_sum": sum(map(int, str(abs(number)))),  # Ensure numeric
+        "fun_fact": str(fun_fact)  # Ensure string
+    }
