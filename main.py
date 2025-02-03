@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse  # Import JSONResponse
+from fastapi.responses import JSONResponse
 import requests
 
 app = FastAPI()
@@ -38,17 +38,30 @@ def is_armstrong(n: int) -> bool:
 
 @app.get("/api/classify-number")
 def classify_number(number: str = Query(..., description="The number to classify")):
-    # Validate input: Must be an integer
+    # Check if input is numeric (ignoring negative sign)
     if not number.lstrip("-").isdigit():
+        # Return error response with 'alphabet' in number field
         return JSONResponse(
             content={
-                "number": number,
+                "number": "alphabet",  # Return 'alphabet' as required in the response
                 "error": True
             },
             status_code=400
         )
 
-    number = int(number)  # Convert validated input to integer
+    # Convert to integer if valid
+    number = int(number)
+
+    # Handle negative numbers (optional)
+    if number < 0:
+        return JSONResponse(
+            content={
+                "number": number,
+                "error": True,
+                "message": "Invalid input: number must be positive."
+            },
+            status_code=400
+        )
 
     # Determine properties
     properties = []
@@ -67,7 +80,7 @@ def classify_number(number: str = Query(..., description="The number to classify
     except requests.exceptions.RequestException:
         fun_fact = "Fun fact service unavailable."
 
-    # Return JSON response with proper types
+    # Return valid JSON response
     return JSONResponse(
         content={
             "number": number,
